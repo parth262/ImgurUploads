@@ -1,0 +1,30 @@
+@(jobs: Array[Array[String]])
+
+@main("Imgur Uploads") {
+    <div class="container">
+        <div class="row">
+            <div class="card card-custom" style="width: 40rem;
+                margin: 100px auto;">
+                <div class="card-body text-center">
+                    <h2>Add Image URLs here!</h2>
+                    <div class="input-group mb-3" style="margin-top: 20px">
+                        <input type="text" class="form-control" placeholder="Image URL" aria-label="Image URL" aria-describedby="addUrl">
+                        <div class="input-group-append">
+                            <button class="btn btn-info" type="button" id="addUrl">Add</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12 text-center">
+                <h2>Submitted Jobs</h2>
+                <ol>
+                @for(job <- jobs) {
+                    <li>@job</li>
+                }
+                </ol>
+            </div>
+        </div>
+    </div>
+}
