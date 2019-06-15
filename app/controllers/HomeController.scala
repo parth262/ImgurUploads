@@ -21,13 +21,7 @@ import scala.util.{Failure, Success}
 @Singleton
 class HomeController @Inject()(system: ActorSystem, ws: WSClient, config: Configuration) extends InjectedController {
   import system.dispatcher
-  /**
-    * Create an Action to render an HTML page.
-    *
-    * The configuration in the `routes` file means that this method
-    * will be called when the application receives a `GET` request with
-    * a path of `/`.
-    */
+
   def index() = Action { implicit request: Request[AnyContent] =>
     Ok(views.html.index(Array()))
   }
@@ -55,6 +49,7 @@ class HomeController @Inject()(system: ActorSystem, ws: WSClient, config: Config
       "id" -> config.get[String]("imgur.client.id"),
       "secret" -> config.get[String]("imgur.client.secret")
     )
+
     QueryParser.parse(query) match {
       case Success(queryAst) =>
         Executor.execute(
