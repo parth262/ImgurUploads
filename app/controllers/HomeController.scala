@@ -3,7 +3,7 @@ package controllers
 import akka.actor.ActorSystem
 import javax.inject._
 import models.{ImageUrls, SchemaDefinition}
-import play.api.libs.json.{JsObject, JsString, Json}
+import play.api.libs.json.{JsObject, JsString, JsValue, Json}
 import play.api.libs.ws.WSClient
 import play.api.mvc._
 import play.api._
@@ -26,7 +26,7 @@ class HomeController @Inject()(system: ActorSystem, ws: WSClient, config: Config
     Ok(views.html.index(Array()))
   }
 
-  def uploadImages = Action.async(parse.json) { request =>
+  def uploadImages: Action[JsValue] = Action.async(parse.json) { request =>
     val query = (request.body \ "query").as[String]
     val operation = (request.body \ "operationName").asOpt[String]
     println(query)

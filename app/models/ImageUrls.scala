@@ -2,34 +2,37 @@ package models
 
 import java.util.Base64
 import java.util.UUID.nameUUIDFromBytes
+
 import play.api.Logger
 import play.api.libs.ws._
 
 import scala.concurrent.ExecutionContext
 
-class ImageUrls(ws: WSClient, ec: ExecutionContext, imgurConfig: Map[String, String]) {
-  val logger = Logger.logger
+class ImageUrls(ws: WSClient, implicit val ec: ExecutionContext, imgurConfig: Map[String, String]) {
+  private val logger = Logger.logger
+
   def processUrls(urls: Seq[String]): String = {
     val jobId = nameUUIDFromBytes(urls.mkString(";").getBytes).toString
-    urls.foreach(url => {
+    urls foreach processImage
+    /*for(url <- urls) {
       processImage(url)
-    })
+    }*/
     jobId
   }
 
   private def processImage(url: String): Unit = {
     logger.info("Downloading image in memory")
     val request = ws.url(url)
-    val futureResponse = request.get()
-    futureResponse.onComplete(response => {
-      if (response.isSuccess) {
-        logger.info("Image successfully downloaded")
-        logger.info("Uploading image to imgur")
-        uploadImageToImgur(response.get.bodyAsBytes.toArray)
-      } else {
-        logger.error(s"Error fetching image from $url")
+    request.get().map(response => {
+      logger.info("Image successfully downloaded")
+      logger.info("Uploading image to imgur")
+      response.status match {
+        case 200 => uploadImageToImgur(response.bodyAsBytes.toArray)
+        case status => logger.error(s"Error fetching image from url $url with status $status")
       }
-    })(ec)
+    }).recover {
+      case _: Exception => logger.error(s"Error fetching image from $url")
+    }
   }
 
   private def uploadImageToImgur(imageBytes: Array[Byte]): Unit = {
@@ -37,14 +40,14 @@ class ImageUrls(ws: WSClient, ec: ExecutionContext, imgurConfig: Map[String, Str
       .addHttpHeaders("Authorization" -> s"Client-ID ${imgurConfig("id")}",
         "Content-Type" -> "application/x-www-form-urlencoded")
       .post(Map("image" -> new String(Base64.getEncoder.encode(imageBytes))))
-    futureResponse.onComplete(response => {
-      if (response.isSuccess) {
-        val completedResponse = response.get.json.toString()
-        logger.debug(completedResponse)
-      } else {
-        logger.error(s"Error => ${response.get.json \ "data" \ "error" get toString}")
+    futureResponse.map(response => {
+      response.status match {
+        case 200 => logger.debug(response.json.toString())
+        case status => logger.error(s"Error uploading to imgur with status $status")
       }
-    })(ec)
+    }).recover {
+      case e: Exception => logger.error(s"Error => $e")
+    }
   }
 
 }
