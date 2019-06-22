@@ -8,7 +8,7 @@ import play.api.libs.ws._
 
 import scala.concurrent.ExecutionContext
 
-class ImageUrls(ws: WSClient, implicit val ec: ExecutionContext, imgurConfig: Map[String, String]) {
+class ImageUrls(ws: WSClient, imgurConfig: Map[String, String])(implicit val ec: ExecutionContext) {
   private val logger = Logger.logger
 
   def processUrls(urls: Seq[String]): String = {
@@ -24,10 +24,11 @@ class ImageUrls(ws: WSClient, implicit val ec: ExecutionContext, imgurConfig: Ma
     logger.info("Downloading image in memory")
     val request = ws.url(url)
     request.get().map(response => {
-      logger.info("Image successfully downloaded")
-      logger.info("Uploading image to imgur")
       response.status match {
-        case 200 => uploadImageToImgur(response.bodyAsBytes.toArray)
+        case 200 =>
+          logger.info("Image successfully downloaded")
+          logger.info("Uploading image to imgur")
+          uploadImageToImgur(response.bodyAsBytes.toArray)
         case status => logger.error(s"Error fetching image from url $url with status $status")
       }
     }).recover {

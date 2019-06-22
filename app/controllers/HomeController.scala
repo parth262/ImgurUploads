@@ -29,14 +29,12 @@ class HomeController @Inject()(system: ActorSystem, ws: WSClient, config: Config
   def uploadImages: Action[JsValue] = Action.async(parse.json) { request =>
     val query = (request.body \ "query").as[String]
     val operation = (request.body \ "operationName").asOpt[String]
-    println(query)
     val variables = (request.body \ "variables").toOption.flatMap {
       case JsString(vars) ⇒ Some(parseVariables(vars))
       case obj: JsObject ⇒ Some(obj)
       case _ ⇒ None
     }
     executeQuery(query, variables, operation)
-    //    executeQuery(query)
   }
 
   private def parseVariables(variables: String) =
@@ -54,7 +52,7 @@ class HomeController @Inject()(system: ActorSystem, ws: WSClient, config: Config
       case Success(queryAst) =>
         Executor.execute(
           SchemaDefinition.UrlSchema,
-          queryAst, new ImageUrls(ws, this.defaultExecutionContext, imgurConfig),
+          queryAst, new ImageUrls(ws, imgurConfig),
           operationName = operation,
           variables = variables getOrElse Json.obj())
           .map(Ok(_))
