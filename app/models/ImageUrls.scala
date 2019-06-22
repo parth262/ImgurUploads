@@ -9,7 +9,7 @@ import play.api.libs.ws._
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
-class ImageUrls(ws: WSClient, implicit val ec: ExecutionContext, imgurConfig: Map[String, String]) {
+class ImageUrls(ws: WSClient, imgurConfig: Map[String, String])(implicit val ec: ExecutionContext) {
   private val logger = Logger.logger
 
   def processUrls(urls: Seq[String]): String = {

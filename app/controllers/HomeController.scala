@@ -54,7 +54,7 @@ class HomeController @Inject()(system: ActorSystem, ws: WSClient, config: Config
       case Success(queryAst) =>
         Executor.execute(
           SchemaDefinition.UrlSchema,
-          queryAst, new ImageUrls(ws, this.defaultExecutionContext, imgurConfig),
+          queryAst, new ImageUrls(ws, imgurConfig),
           operationName = operation,
           variables = variables getOrElse Json.obj())
           .map(Ok(_))
