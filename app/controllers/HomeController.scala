@@ -1,12 +1,10 @@
 package controllers
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorRef, ActorSystem}
 import javax.inject._
 import models.{ImageUrls, SchemaDefinition}
 import play.api.libs.json.{JsObject, JsString, JsValue, Json}
-import play.api.libs.ws.WSClient
 import play.api.mvc._
-import play.api._
 import sangria.execution.{ErrorWithResolver, Executor, QueryAnalysisError}
 import sangria.marshalling.playJson._
 import sangria.parser.{QueryParser, SyntaxError}
@@ -19,7 +17,8 @@ import scala.util.{Failure, Success}
   * application's home page.
   */
 @Singleton
-class HomeController @Inject()(system: ActorSystem, ws: WSClient, config: Configuration) extends InjectedController {
+class HomeController @Inject()(@Named("imgurUploadActor") imgurUploadActor: ActorRef, system: ActorSystem) extends InjectedController {
+
   import system.dispatcher
 
   def index() = Action { implicit request: Request[AnyContent] =>
@@ -42,17 +41,11 @@ class HomeController @Inject()(system: ActorSystem, ws: WSClient, config: Config
 
 
   private def executeQuery(query: String, variables: Option[JsObject], operation: Option[String]) = {
-    val imgurConfig = Map(
-      "uploadUrl" -> config.get[String]("imgur.imageUploadUrl"),
-      "id" -> config.get[String]("imgur.client.id"),
-      "secret" -> config.get[String]("imgur.client.secret")
-    )
-
     QueryParser.parse(query) match {
       case Success(queryAst) =>
         Executor.execute(
           SchemaDefinition.UrlSchema,
-          queryAst, new ImageUrls(ws, imgurConfig),
+          queryAst, new ImageUrls(imgurUploadActor),
           operationName = operation,
           variables = variables getOrElse Json.obj())
           .map(Ok(_))
